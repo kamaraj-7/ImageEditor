@@ -1,9 +1,9 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Precision Image Editor</title>
+    <title>Advanced Image Editor with OCR</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         :root {
             --primary: #2563eb;
@@ -15,6 +15,9 @@
             --border: #e2e8f0;
             --radius: 8px;
             --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
         }
 
         [data-theme="dark"] {
@@ -68,6 +71,7 @@
             display: flex;
             gap: 0.75rem;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         /* Main Layout */
@@ -79,7 +83,7 @@
 
         /* Sidebar Controls */
         .sidebar {
-            width: 320px;
+            width: 360px;
             background-color: var(--surface);
             border-right: 1px solid var(--border);
             display: flex;
@@ -143,6 +147,7 @@
             max-width: 100%;
             height: auto;
             display: block;
+            cursor: crosshair;
         }
 
         /* Upload Area */
@@ -199,6 +204,26 @@
             background: var(--primary-hover);
         }
 
+        button.success {
+            background: var(--success);
+            color: white;
+            border: none;
+        }
+
+        button.success:hover {
+            background: #059669;
+        }
+
+        button.danger {
+            background: var(--danger);
+            color: white;
+            border: none;
+        }
+
+        button.danger:hover {
+            background: #dc2626;
+        }
+
         button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -224,65 +249,122 @@
             gap: 0.5rem;
         }
 
-        /* Comparison Mode */
-        .comparison-container {
-            display: none;
-            flex-direction: column;
-            gap: 1rem;
-            width: 100%;
-            height: 100%;
+        .tool-grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.5rem;
         }
 
-        .comparison-view {
-            display: flex;
-            gap: 1rem;
-            flex: 1;
-            min-height: 0;
+        /* Detected Text List */
+        .detected-text-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg);
         }
 
-        .comparison-pane {
-            flex: 1;
+        .text-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
             align-items: center;
-            min-width: 0;
+            font-size: 0.875rem;
         }
 
-        .comparison-pane h4 {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
+        .text-item:last-child {
+            border-bottom: none;
         }
 
-        .comparison-pane .img-wrap {
+        .text-item-content {
             flex: 1;
-            width: 100%;
-            display: flex;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .text-item button {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        /* Status Messages */
+        .status-message {
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            display: none;
+        }
+
+        .status-message.show {
+            display: block;
+        }
+
+        .status-message.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        .status-message.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+
+        .status-message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .status-message.warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
             align-items: center;
             justify-content: center;
-            background: #eee;
-            border-radius: var(--radius);
-            overflow: auto;
         }
 
-        .comparison-pane img, .comparison-pane canvas {
-            max-width: 100%;
-            max-height: 100%;
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
             box-shadow: var(--shadow);
         }
 
-        /* Info Panel */
-        .info-panel {
-            position: absolute;
-            bottom: 1rem;
-            right: 1rem;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            display: none;
+        .modal-content h2 {
+            margin-bottom: 1rem;
+        }
+
+        .modal-content input {
+            margin-bottom: 1rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
         }
 
         /* Hidden elements */
@@ -293,6 +375,8 @@
             main { flex-direction: column; }
             .sidebar { width: 100%; height: auto; border-right: none; border-top: 1px solid var(--border); }
             .workspace { height: 300px; }
+            .header-actions { gap: 0.25rem; }
+            button { padding: 0.4rem 0.8rem; font-size: 0.75rem; }
         }
     </style>
 </head>
@@ -301,7 +385,7 @@
     <header>
         <div class="logo">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-            Precision Editor
+            Advanced Editor
         </div>
         <div class="header-actions">
             <button id="theme-toggle" title="Toggle Dark Mode">
@@ -323,6 +407,31 @@
                     Upload Image
                 </button>
                 <input type="file" id="file-input" accept="image/*">
+                <div id="status-message" class="status-message"></div>
+            </div>
+
+            <div class="control-group">
+                <h3>Text Detection (OCR)</h3>
+                <button id="detect-text-btn" disabled style="width:100%; margin-bottom:0.5rem">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                    Detect Text
+                </button>
+                <div id="detected-text-list" class="detected-text-list" style="display:none;"></div>
+            </div>
+
+            <div class="control-group">
+                <h3>Text Replacement</h3>
+                <div class="control-item">
+                    <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">Select Text to Replace:</label>
+                    <select id="text-select" disabled style="margin-bottom:0.5rem">
+                        <option value="">-- Choose detected text --</option>
+                    </select>
+                </div>
+                <div class="control-item">
+                    <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">New Text:</label>
+                    <input type="text" id="replacement-text" placeholder="Enter replacement text" disabled>
+                </div>
+                <button id="replace-text-btn" disabled style="width:100%; margin-bottom:0.5rem">Replace Text</button>
             </div>
 
             <div class="control-group">
@@ -349,30 +458,25 @@
                     <div class="control-label"><span>Saturation</span><span id="saturation-val">100%</span></div>
                     <input type="range" id="saturation-slider" min="0" max="200" value="100" disabled>
                 </div>
-                <div class="control-item">
-                    <div class="control-label"><span>Blur</span><span id="blur-val">0px</span></div>
-                    <input type="range" id="blur-slider" min="0" max="20" value="0" disabled>
-                </div>
             </div>
 
             <div class="control-group">
-                <h3>Text Overlay</h3>
+                <h3>Add New Text</h3>
                 <div class="control-item">
                     <input type="text" id="text-input" placeholder="Enter text..." disabled>
                 </div>
                 <div class="tool-grid">
-                    <input type="color" id="text-color" value="#ffffff" disabled style="height:38px; padding:2px">
+                    <input type="color" id="text-color" value="#000000" disabled style="height:38px; padding:2px">
                     <input type="number" id="text-size" value="40" min="10" max="200" disabled>
                 </div>
-                <button id="add-text-btn" disabled style="width:100%; margin-top:0.5rem">Add Text</button>
-            </div>
-
-            <div class="control-group">
-                <h3>View Options</h3>
-                <div class="control-item" style="display:flex; align-items:center; gap:0.5rem">
-                    <input type="checkbox" id="compare-toggle" disabled>
-                    <label for="compare-toggle" style="font-size:0.875rem">Side-by-Side Comparison</label>
-                </div>
+                <select id="font-family" disabled style="margin-bottom:0.5rem">
+                    <option value="Arial">Arial</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Verdana">Verdana</option>
+                </select>
+                <button id="add-text-btn" disabled style="width:100%">Add Text</button>
             </div>
         </div>
 
@@ -385,31 +489,28 @@
             <div class="canvas-container" id="canvas-ui">
                 <canvas id="editor-canvas"></canvas>
             </div>
-
-            <div class="comparison-container" id="comparison-ui">
-                <div class="comparison-view">
-                    <div class="comparison-pane">
-                        <h4>Original</h4>
-                        <div class="img-wrap"><img id="original-preview"></div>
-                    </div>
-                    <div class="comparison-pane">
-                        <h4>Edited</h4>
-                        <div class="img-wrap"><canvas id="compare-canvas"></canvas></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="info-panel" id="info-panel">
-                <span id="res-info">0 x 0 px</span> | <span id="zoom-info">100%</span>
-            </div>
         </div>
     </main>
+
+    <!-- Text Replacement Modal -->
+    <div class="modal" id="replace-modal">
+        <div class="modal-content">
+            <h2>Replace Text</h2>
+            <p id="modal-original-text" style="margin-bottom:1rem; font-size:0.875rem; color:var(--text-muted)"></p>
+            <input type="text" id="modal-replacement-text" placeholder="Enter new text">
+            <div class="modal-actions">
+                <button onclick="closeReplaceModal()">Cancel</button>
+                <button class="primary" onclick="confirmReplace()">Replace</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // State Management
         const state = {
             originalImage: null,
-            currentImage: null, // Base image (after transforms but before filters/text)
+            detectedTexts: [],
+            selectedTextIndex: -1,
             history: [],
             historyIndex: -1,
             rotation: 0,
@@ -418,39 +519,25 @@
             filters: {
                 brightness: 100,
                 contrast: 100,
-                saturation: 100,
-                blur: 0
+                saturation: 100
             },
             textOverlays: [],
-            isComparing: false
+            replacedTexts: {} // Track which texts have been replaced
         };
 
         // DOM Elements
         const fileInput = document.getElementById('file-input');
         const uploadUI = document.getElementById('upload-ui');
         const canvasUI = document.getElementById('canvas-ui');
-        const comparisonUI = document.getElementById('comparison-ui');
         const editorCanvas = document.getElementById('editor-canvas');
-        const compareCanvas = document.getElementById('compare-canvas');
-        const originalPreview = document.getElementById('original-preview');
         const ctx = editorCanvas.getContext('2d');
         const dropZone = document.getElementById('drop-zone');
-
-        // Control Elements
-        const brightnessSlider = document.getElementById('brightness-slider');
-        const contrastSlider = document.getElementById('contrast-slider');
-        const saturationSlider = document.getElementById('saturation-slider');
-        const blurSlider = document.getElementById('blur-slider');
-        const textInput = document.getElementById('text-input');
-        const textColor = document.getElementById('text-color');
-        const textSize = document.getElementById('text-size');
-        const addTextBtn = document.getElementById('add-text-btn');
-        const compareToggle = document.getElementById('compare-toggle');
-        const undoBtn = document.getElementById('undo-btn');
-        const redoBtn = document.getElementById('redo-btn');
-        const resetBtn = document.getElementById('reset-btn');
-        const downloadBtn = document.getElementById('download-btn');
-        const resInfo = document.getElementById('res-info');
+        const statusMessage = document.getElementById('status-message');
+        const detectTextBtn = document.getElementById('detect-text-btn');
+        const detectedTextList = document.getElementById('detected-text-list');
+        const textSelect = document.getElementById('text-select');
+        const replacementText = document.getElementById('replacement-text');
+        const replaceTextBtn = document.getElementById('replace-text-btn');
 
         // Initialization
         function init() {
@@ -462,8 +549,7 @@
             fileInput.addEventListener('change', handleFileUpload);
             
             // Drag and Drop
-            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--primary)'; });
-            dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = 'var(--border)'; });
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); });
             dropZone.addEventListener('drop', (e) => {
                 e.preventDefault();
                 const file = e.dataTransfer.files[0];
@@ -471,25 +557,39 @@
             });
             uploadUI.addEventListener('click', () => fileInput.click());
 
+            // Text Detection
+            detectTextBtn.addEventListener('click', detectTextInImage);
+
+            // Text Replacement
+            textSelect.addEventListener('change', (e) => {
+                state.selectedTextIndex = parseInt(e.target.value);
+                replacementText.disabled = state.selectedTextIndex === -1;
+                replaceTextBtn.disabled = state.selectedTextIndex === -1;
+            });
+
+            replaceTextBtn.addEventListener('click', () => {
+                if (state.selectedTextIndex >= 0 && state.selectedTextIndex < state.detectedTexts.length) {
+                    const original = state.detectedTexts[state.selectedTextIndex];
+                    document.getElementById('modal-original-text').textContent = `Original: "${original.text}"`;
+                    document.getElementById('modal-replacement-text').value = replacementText.value;
+                    document.getElementById('replace-modal').classList.add('show');
+                }
+            });
+
             // Adjustments
-            brightnessSlider.addEventListener('input', (e) => {
+            document.getElementById('brightness-slider').addEventListener('input', (e) => {
                 state.filters.brightness = e.target.value;
                 document.getElementById('brightness-val').textContent = e.target.value + '%';
                 render();
             });
-            contrastSlider.addEventListener('input', (e) => {
+            document.getElementById('contrast-slider').addEventListener('input', (e) => {
                 state.filters.contrast = e.target.value;
                 document.getElementById('contrast-val').textContent = e.target.value + '%';
                 render();
             });
-            saturationSlider.addEventListener('input', (e) => {
+            document.getElementById('saturation-slider').addEventListener('input', (e) => {
                 state.filters.saturation = e.target.value;
                 document.getElementById('saturation-val').textContent = e.target.value + '%';
-                render();
-            });
-            blurSlider.addEventListener('input', (e) => {
-                state.filters.blur = e.target.value;
-                document.getElementById('blur-val').textContent = e.target.value + 'px';
                 render();
             });
 
@@ -500,29 +600,13 @@
             document.getElementById('flip-v-btn').addEventListener('click', () => { state.flipV *= -1; saveHistory(); render(); });
 
             // Text
-            addTextBtn.addEventListener('click', () => {
-                if (!textInput.value) return;
-                state.textOverlays.push({
-                    text: textInput.value,
-                    color: textColor.value,
-                    size: parseInt(textSize.value),
-                    x: editorCanvas.width / 2,
-                    y: editorCanvas.height / 2
-                });
-                textInput.value = '';
-                saveHistory();
-                render();
-            });
+            document.getElementById('add-text-btn').addEventListener('click', addTextOverlay);
 
             // Actions
-            undoBtn.addEventListener('click', undo);
-            redoBtn.addEventListener('click', redo);
-            resetBtn.addEventListener('click', reset);
-            downloadBtn.addEventListener('click', download);
-            compareToggle.addEventListener('change', (e) => {
-                state.isComparing = e.target.checked;
-                toggleView();
-            });
+            document.getElementById('undo-btn').addEventListener('click', undo);
+            document.getElementById('redo-btn').addEventListener('click', redo);
+            document.getElementById('reset-btn').addEventListener('click', reset);
+            document.getElementById('download-btn').addEventListener('click', download);
 
             document.getElementById('theme-toggle').addEventListener('click', () => {
                 const theme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -542,25 +626,108 @@
                 const img = new Image();
                 img.onload = () => {
                     state.originalImage = img;
-                    originalPreview.src = img.src;
                     resetState();
                     enableControls();
                     render();
-                    toggleView();
-                    resInfo.textContent = `${img.width} x ${img.height} px`;
-                    document.getElementById('info-panel').style.display = 'block';
+                    uploadUI.style.display = 'none';
+                    canvasUI.style.display = 'block';
+                    showStatus(`Image loaded: ${img.width}x${img.height}px`, 'success');
                 };
                 img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
 
+        async function detectTextInImage() {
+            if (!state.originalImage) return;
+            
+            showStatus('Detecting text... This may take a moment', 'info');
+            detectTextBtn.disabled = true;
+
+            try {
+                const result = await Tesseract.recognize(state.originalImage.src, 'eng', {
+                    logger: m => console.log(m)
+                });
+
+                state.detectedTexts = [];
+                const words = result.data.words.filter(w => w.confidence > 30);
+                
+                words.forEach(word => {
+                    state.detectedTexts.push({
+                        text: word.text,
+                        bbox: word.bbox,
+                        confidence: word.confidence
+                    });
+                });
+
+                displayDetectedTexts();
+                showStatus(`Detected ${state.detectedTexts.length} text elements`, 'success');
+            } catch (error) {
+                showStatus(`OCR Error: ${error.message}`, 'error');
+                console.error(error);
+            } finally {
+                detectTextBtn.disabled = false;
+            }
+        }
+
+        function displayDetectedTexts() {
+            detectedTextList.innerHTML = '';
+            textSelect.innerHTML = '<option value="">-- Choose detected text --</option>';
+
+            state.detectedTexts.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = 'text-item';
+                div.innerHTML = `
+                    <span class="text-item-content" title="${item.text}">${item.text}</span>
+                    <button onclick="selectDetectedText(${idx})" style="padding:0.25rem 0.5rem">Select</button>
+                `;
+                detectedTextList.appendChild(div);
+
+                const option = document.createElement('option');
+                option.value = idx;
+                option.textContent = item.text;
+                textSelect.appendChild(option);
+            });
+
+            detectedTextList.style.display = state.detectedTexts.length > 0 ? 'block' : 'none';
+            textSelect.disabled = state.detectedTexts.length === 0;
+        }
+
+        function selectDetectedText(idx) {
+            textSelect.value = idx;
+            state.selectedTextIndex = idx;
+            replacementText.value = state.detectedTexts[idx].text;
+            replacementText.disabled = false;
+            replaceTextBtn.disabled = false;
+        }
+
+        function addTextOverlay() {
+            const text = document.getElementById('text-input').value;
+            if (!text) return;
+
+            state.textOverlays.push({
+                text: text,
+                color: document.getElementById('text-color').value,
+                size: parseInt(document.getElementById('text-size').value),
+                font: document.getElementById('font-family').value,
+                x: editorCanvas.width / 2,
+                y: editorCanvas.height / 2
+            });
+
+            document.getElementById('text-input').value = '';
+            saveHistory();
+            render();
+            showStatus('Text added', 'success');
+        }
+
         function resetState() {
             state.rotation = 0;
             state.flipH = 1;
             state.flipV = 1;
-            state.filters = { brightness: 100, contrast: 100, saturation: 100, blur: 0 };
+            state.filters = { brightness: 100, contrast: 100, saturation: 100 };
             state.textOverlays = [];
+            state.detectedTexts = [];
+            state.replacedTexts = {};
             state.history = [];
             state.historyIndex = -1;
             saveHistory();
@@ -568,86 +735,61 @@
         }
 
         function updateSliders() {
-            brightnessSlider.value = state.filters.brightness;
-            contrastSlider.value = state.filters.contrast;
-            saturationSlider.value = state.filters.saturation;
-            blurSlider.value = state.filters.blur;
+            document.getElementById('brightness-slider').value = state.filters.brightness;
+            document.getElementById('contrast-slider').value = state.filters.contrast;
+            document.getElementById('saturation-slider').value = state.filters.saturation;
             document.getElementById('brightness-val').textContent = state.filters.brightness + '%';
             document.getElementById('contrast-val').textContent = state.filters.contrast + '%';
             document.getElementById('saturation-val').textContent = state.filters.saturation + '%';
-            document.getElementById('blur-val').textContent = state.filters.blur + 'px';
         }
 
         function enableControls() {
-            const controls = document.querySelectorAll('button, input');
-            controls.forEach(c => c.disabled = false);
-            undoBtn.disabled = state.historyIndex <= 0;
-            redoBtn.disabled = state.historyIndex >= state.history.length - 1;
-        }
-
-        function toggleView() {
-            if (!state.originalImage) return;
-            if (state.isComparing) {
-                canvasUI.style.display = 'none';
-                comparisonUI.style.display = 'flex';
-                renderCompare();
-            } else {
-                canvasUI.style.display = 'block';
-                comparisonUI.style.display = 'none';
-                uploadUI.style.display = 'none';
-                render();
-            }
+            const controls = document.querySelectorAll('button, input, select');
+            controls.forEach(c => {
+                if (c.id !== 'file-input' && c.id !== 'theme-toggle') c.disabled = false;
+            });
+            detectTextBtn.disabled = false;
+            updateUndoRedoButtons();
         }
 
         function render() {
             if (!state.originalImage) return;
-            drawToCanvas(editorCanvas);
-        }
 
-        function renderCompare() {
-            drawToCanvas(compareCanvas);
-        }
-
-        function drawToCanvas(targetCanvas) {
             const img = state.originalImage;
-            const targetCtx = targetCanvas.getContext('2d');
-            
-            // Calculate dimensions based on rotation
             const isVertical = (state.rotation / 90) % 2 !== 0;
             const width = isVertical ? img.height : img.width;
             const height = isVertical ? img.width : img.height;
             
-            targetCanvas.width = width;
-            targetCanvas.height = height;
+            editorCanvas.width = width;
+            editorCanvas.height = height;
 
-            targetCtx.clearRect(0, 0, width, height);
+            ctx.clearRect(0, 0, width, height);
             
             // Apply Filters
-            targetCtx.filter = `
+            ctx.filter = `
                 brightness(${state.filters.brightness}%) 
                 contrast(${state.filters.contrast}%) 
-                saturate(${state.filters.saturation}%) 
-                blur(${state.filters.blur}px)
+                saturate(${state.filters.saturation}%)
             `;
 
             // Apply Transforms
-            targetCtx.save();
-            targetCtx.translate(width / 2, height / 2);
-            targetCtx.rotate((state.rotation * Math.PI) / 180);
-            targetCtx.scale(state.flipH, state.flipV);
-            targetCtx.drawImage(img, -img.width / 2, -img.height / 2);
-            targetCtx.restore();
+            ctx.save();
+            ctx.translate(width / 2, height / 2);
+            ctx.rotate((state.rotation * Math.PI) / 180);
+            ctx.scale(state.flipH, state.flipV);
+            ctx.drawImage(img, -img.width / 2, -img.height / 2);
+            ctx.restore();
 
             // Reset filter for text
-            targetCtx.filter = 'none';
+            ctx.filter = 'none';
 
             // Draw Text Overlays
             state.textOverlays.forEach(item => {
-                targetCtx.fillStyle = item.color;
-                targetCtx.font = `bold ${item.size}px sans-serif`;
-                targetCtx.textAlign = 'center';
-                targetCtx.textBaseline = 'middle';
-                targetCtx.fillText(item.text, item.x, item.y);
+                ctx.fillStyle = item.color;
+                ctx.font = `bold ${item.size}px ${item.font}`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(item.text, item.x, item.y);
             });
         }
 
@@ -657,10 +799,10 @@
                 flipH: state.flipH,
                 flipV: state.flipV,
                 filters: { ...state.filters },
-                textOverlays: [...state.textOverlays]
+                textOverlays: [...state.textOverlays],
+                replacedTexts: { ...state.replacedTexts }
             });
             
-            // Remove future history if we're in the middle of undo stack
             if (state.historyIndex < state.history.length - 1) {
                 state.history = state.history.slice(0, state.historyIndex + 1);
             }
@@ -668,7 +810,6 @@
             state.history.push(snapshot);
             state.historyIndex++;
             
-            // Limit history size
             if (state.history.length > 20) {
                 state.history.shift();
                 state.historyIndex--;
@@ -698,22 +839,22 @@
             state.flipV = data.flipV;
             state.filters = data.filters;
             state.textOverlays = data.textOverlays;
+            state.replacedTexts = data.replacedTexts;
             updateSliders();
             render();
-            if (state.isComparing) renderCompare();
             updateUndoRedoButtons();
         }
 
         function updateUndoRedoButtons() {
-            undoBtn.disabled = state.historyIndex <= 0;
-            redoBtn.disabled = state.historyIndex >= state.history.length - 1;
+            document.getElementById('undo-btn').disabled = state.historyIndex <= 0;
+            document.getElementById('redo-btn').disabled = state.historyIndex >= state.history.length - 1;
         }
 
         function reset() {
             if (confirm('Are you sure you want to reset all changes?')) {
                 resetState();
                 render();
-                if (state.isComparing) renderCompare();
+                showStatus('All changes reset', 'info');
             }
         }
 
@@ -722,6 +863,42 @@
             link.download = 'edited-image.png';
             link.href = editorCanvas.toDataURL('image/png');
             link.click();
+            showStatus('Image downloaded', 'success');
+        }
+
+        function closeReplaceModal() {
+            document.getElementById('replace-modal').classList.remove('show');
+        }
+
+        function confirmReplace() {
+            const newText = document.getElementById('modal-replacement-text').value;
+            if (!newText || state.selectedTextIndex < 0) return;
+
+            const original = state.detectedTexts[state.selectedTextIndex];
+            state.replacedTexts[original.text] = newText;
+
+            // Add as text overlay
+            state.textOverlays.push({
+                text: newText,
+                color: '#000000',
+                size: 40,
+                font: 'Arial',
+                x: original.bbox.x0 + (original.bbox.x1 - original.bbox.x0) / 2,
+                y: original.bbox.y0 + (original.bbox.y1 - original.bbox.y0) / 2
+            });
+
+            saveHistory();
+            render();
+            closeReplaceModal();
+            showStatus(`Text replaced: "${original.text}" → "${newText}"`, 'success');
+        }
+
+        function showStatus(message, type = 'info') {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message show ${type}`;
+            setTimeout(() => {
+                statusMessage.classList.remove('show');
+            }, 4000);
         }
 
         function applyTheme() {
