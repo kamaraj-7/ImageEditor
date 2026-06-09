@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Image Editor with OCR</title>
+    <title>Exact Replica Image Editor</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         :root {
@@ -83,7 +83,7 @@
 
         /* Sidebar Controls */
         .sidebar {
-            width: 360px;
+            width: 380px;
             background-color: var(--surface);
             border-right: 1px solid var(--border);
             display: flex;
@@ -147,7 +147,6 @@
             max-width: 100%;
             height: auto;
             display: block;
-            cursor: crosshair;
         }
 
         /* Upload Area */
@@ -214,16 +213,6 @@
             background: #059669;
         }
 
-        button.danger {
-            background: var(--danger);
-            color: white;
-            border: none;
-        }
-
-        button.danger:hover {
-            background: #dc2626;
-        }
-
         button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -249,12 +238,6 @@
             gap: 0.5rem;
         }
 
-        .tool-grid-3 {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 0.5rem;
-        }
-
         /* Detected Text List */
         .detected-text-list {
             max-height: 200px;
@@ -271,6 +254,12 @@
             justify-content: space-between;
             align-items: center;
             font-size: 0.875rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .text-item:hover {
+            background: var(--border);
         }
 
         .text-item:last-child {
@@ -284,9 +273,10 @@
             white-space: nowrap;
         }
 
-        .text-item button {
-            padding: 0.25rem 0.5rem;
+        .text-item-meta {
             font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-left: 0.5rem;
         }
 
         /* Status Messages */
@@ -320,12 +310,6 @@
             border: 1px solid #fca5a5;
         }
 
-        .status-message.warning {
-            background: #fef3c7;
-            color: #92400e;
-            border: 1px solid #fcd34d;
-        }
-
         /* Modal */
         .modal {
             display: none;
@@ -348,9 +332,11 @@
             background: var(--surface);
             border-radius: var(--radius);
             padding: 2rem;
-            max-width: 500px;
+            max-width: 600px;
             width: 90%;
             box-shadow: var(--shadow);
+            max-height: 80vh;
+            overflow-y: auto;
         }
 
         .modal-content h2 {
@@ -365,6 +351,16 @@
             display: flex;
             gap: 0.5rem;
             justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        .style-preview {
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg);
+            margin-bottom: 1rem;
+            text-align: center;
         }
 
         /* Hidden elements */
@@ -385,7 +381,7 @@
     <header>
         <div class="logo">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-            Advanced Editor
+            Exact Replica Editor
         </div>
         <div class="header-actions">
             <button id="theme-toggle" title="Toggle Dark Mode">
@@ -422,61 +418,16 @@
             <div class="control-group">
                 <h3>Text Replacement</h3>
                 <div class="control-item">
-                    <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">Select Text to Replace:</label>
-                    <select id="text-select" disabled style="margin-bottom:0.5rem">
-                        <option value="">-- Choose detected text --</option>
-                    </select>
+                    <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">Selected Text:</label>
+                    <div id="selected-text-display" style="padding:0.5rem; background:var(--bg); border-radius:var(--radius); font-size:0.875rem; min-height:2rem; display:flex; align-items:center;">
+                        <span style="color:var(--text-muted)">-- None selected --</span>
+                    </div>
                 </div>
                 <div class="control-item">
                     <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">New Text:</label>
                     <input type="text" id="replacement-text" placeholder="Enter replacement text" disabled>
                 </div>
-                <button id="replace-text-btn" disabled style="width:100%; margin-bottom:0.5rem">Replace Text</button>
-            </div>
-
-            <div class="control-group">
-                <h3>Transform</h3>
-                <div class="tool-grid">
-                    <button id="rotate-l-btn" disabled>Rotate L</button>
-                    <button id="rotate-r-btn" disabled>Rotate R</button>
-                    <button id="flip-h-btn" disabled>Flip H</button>
-                    <button id="flip-v-btn" disabled>Flip V</button>
-                </div>
-            </div>
-
-            <div class="control-group">
-                <h3>Adjustments</h3>
-                <div class="control-item">
-                    <div class="control-label"><span>Brightness</span><span id="brightness-val">100%</span></div>
-                    <input type="range" id="brightness-slider" min="0" max="200" value="100" disabled>
-                </div>
-                <div class="control-item">
-                    <div class="control-label"><span>Contrast</span><span id="contrast-val">100%</span></div>
-                    <input type="range" id="contrast-slider" min="0" max="200" value="100" disabled>
-                </div>
-                <div class="control-item">
-                    <div class="control-label"><span>Saturation</span><span id="saturation-val">100%</span></div>
-                    <input type="range" id="saturation-slider" min="0" max="200" value="100" disabled>
-                </div>
-            </div>
-
-            <div class="control-group">
-                <h3>Add New Text</h3>
-                <div class="control-item">
-                    <input type="text" id="text-input" placeholder="Enter text..." disabled>
-                </div>
-                <div class="tool-grid">
-                    <input type="color" id="text-color" value="#000000" disabled style="height:38px; padding:2px">
-                    <input type="number" id="text-size" value="40" min="10" max="200" disabled>
-                </div>
-                <select id="font-family" disabled style="margin-bottom:0.5rem">
-                    <option value="Arial">Arial</option>
-                    <option value="Georgia">Georgia</option>
-                    <option value="Times New Roman">Times New Roman</option>
-                    <option value="Courier New">Courier New</option>
-                    <option value="Verdana">Verdana</option>
-                </select>
-                <button id="add-text-btn" disabled style="width:100%">Add Text</button>
+                <button id="replace-text-btn" disabled style="width:100%">Replace with Auto-Style</button>
             </div>
         </div>
 
@@ -495,12 +446,64 @@
     <!-- Text Replacement Modal -->
     <div class="modal" id="replace-modal">
         <div class="modal-content">
-            <h2>Replace Text</h2>
-            <p id="modal-original-text" style="margin-bottom:1rem; font-size:0.875rem; color:var(--text-muted)"></p>
-            <input type="text" id="modal-replacement-text" placeholder="Enter new text">
+            <h2>Replace Text with Auto-Style Matching</h2>
+            
+            <div class="control-item">
+                <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">Original Text:</label>
+                <div style="padding:0.5rem; background:var(--bg); border-radius:var(--radius); font-size:0.875rem; margin-bottom:1rem;">
+                    <span id="modal-original-text"></span>
+                </div>
+            </div>
+
+            <div class="style-preview" id="style-preview">
+                <p style="margin-bottom:0.5rem; font-size:0.75rem; color:var(--text-muted)">Original Style Preview:</p>
+                <canvas id="original-style-canvas" style="max-width:100%; max-height:150px;"></canvas>
+            </div>
+
+            <div class="control-item">
+                <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">New Text:</label>
+                <input type="text" id="modal-replacement-text" placeholder="Enter replacement text">
+            </div>
+
+            <div class="control-item">
+                <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">Detected Font Size: <span id="detected-font-size">40</span>px</label>
+                <input type="range" id="font-size-slider" min="8" max="200" value="40">
+            </div>
+
+            <div class="control-item">
+                <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">Detected Text Color:</label>
+                <input type="color" id="modal-text-color" value="#000000" style="height:40px; padding:2px">
+            </div>
+
+            <div class="control-item">
+                <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">Font Family:</label>
+                <select id="modal-font-family">
+                    <option value="Arial">Arial (Sans-Serif)</option>
+                    <option value="Georgia">Georgia (Serif)</option>
+                    <option value="Times New Roman">Times New Roman (Serif)</option>
+                    <option value="Courier New">Courier New (Monospace)</option>
+                    <option value="Verdana">Verdana (Sans-Serif)</option>
+                    <option value="Trebuchet MS">Trebuchet MS (Sans-Serif)</option>
+                </select>
+            </div>
+
+            <div class="control-item">
+                <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">Font Weight:</label>
+                <select id="modal-font-weight">
+                    <option value="normal">Normal</option>
+                    <option value="bold">Bold</option>
+                    <option value="lighter">Lighter</option>
+                </select>
+            </div>
+
+            <div class="style-preview" id="new-style-preview">
+                <p style="margin-bottom:0.5rem; font-size:0.75rem; color:var(--text-muted)">New Text Preview:</p>
+                <canvas id="new-style-canvas" style="max-width:100%; max-height:150px;"></canvas>
+            </div>
+
             <div class="modal-actions">
                 <button onclick="closeReplaceModal()">Cancel</button>
-                <button class="primary" onclick="confirmReplace()">Replace</button>
+                <button class="success" onclick="confirmReplace()">Apply Replacement</button>
             </div>
         </div>
     </div>
@@ -509,20 +512,12 @@
         // State Management
         const state = {
             originalImage: null,
+            baseCanvas: null,
             detectedTexts: [],
             selectedTextIndex: -1,
             history: [],
             historyIndex: -1,
-            rotation: 0,
-            flipH: 1,
-            flipV: 1,
-            filters: {
-                brightness: 100,
-                contrast: 100,
-                saturation: 100
-            },
-            textOverlays: [],
-            replacedTexts: {} // Track which texts have been replaced
+            textReplacements: []
         };
 
         // DOM Elements
@@ -535,9 +530,9 @@
         const statusMessage = document.getElementById('status-message');
         const detectTextBtn = document.getElementById('detect-text-btn');
         const detectedTextList = document.getElementById('detected-text-list');
-        const textSelect = document.getElementById('text-select');
         const replacementText = document.getElementById('replacement-text');
         const replaceTextBtn = document.getElementById('replace-text-btn');
+        const selectedTextDisplay = document.getElementById('selected-text-display');
 
         // Initialization
         function init() {
@@ -549,7 +544,7 @@
             fileInput.addEventListener('change', handleFileUpload);
             
             // Drag and Drop
-            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); });
+            dropZone.addEventListener('dragover', (e) => e.preventDefault());
             dropZone.addEventListener('drop', (e) => {
                 e.preventDefault();
                 const file = e.dataTransfer.files[0];
@@ -561,46 +556,7 @@
             detectTextBtn.addEventListener('click', detectTextInImage);
 
             // Text Replacement
-            textSelect.addEventListener('change', (e) => {
-                state.selectedTextIndex = parseInt(e.target.value);
-                replacementText.disabled = state.selectedTextIndex === -1;
-                replaceTextBtn.disabled = state.selectedTextIndex === -1;
-            });
-
-            replaceTextBtn.addEventListener('click', () => {
-                if (state.selectedTextIndex >= 0 && state.selectedTextIndex < state.detectedTexts.length) {
-                    const original = state.detectedTexts[state.selectedTextIndex];
-                    document.getElementById('modal-original-text').textContent = `Original: "${original.text}"`;
-                    document.getElementById('modal-replacement-text').value = replacementText.value;
-                    document.getElementById('replace-modal').classList.add('show');
-                }
-            });
-
-            // Adjustments
-            document.getElementById('brightness-slider').addEventListener('input', (e) => {
-                state.filters.brightness = e.target.value;
-                document.getElementById('brightness-val').textContent = e.target.value + '%';
-                render();
-            });
-            document.getElementById('contrast-slider').addEventListener('input', (e) => {
-                state.filters.contrast = e.target.value;
-                document.getElementById('contrast-val').textContent = e.target.value + '%';
-                render();
-            });
-            document.getElementById('saturation-slider').addEventListener('input', (e) => {
-                state.filters.saturation = e.target.value;
-                document.getElementById('saturation-val').textContent = e.target.value + '%';
-                render();
-            });
-
-            // Transforms
-            document.getElementById('rotate-l-btn').addEventListener('click', () => { state.rotation -= 90; saveHistory(); render(); });
-            document.getElementById('rotate-r-btn').addEventListener('click', () => { state.rotation += 90; saveHistory(); render(); });
-            document.getElementById('flip-h-btn').addEventListener('click', () => { state.flipH *= -1; saveHistory(); render(); });
-            document.getElementById('flip-v-btn').addEventListener('click', () => { state.flipV *= -1; saveHistory(); render(); });
-
-            // Text
-            document.getElementById('add-text-btn').addEventListener('click', addTextOverlay);
+            replaceTextBtn.addEventListener('click', openReplaceModal);
 
             // Actions
             document.getElementById('undo-btn').addEventListener('click', undo);
@@ -613,6 +569,13 @@
                 document.body.setAttribute('data-theme', theme);
                 localStorage.setItem('theme', theme);
             });
+
+            // Preview updates
+            document.getElementById('modal-replacement-text').addEventListener('input', updateNewStylePreview);
+            document.getElementById('font-size-slider').addEventListener('input', updateNewStylePreview);
+            document.getElementById('modal-text-color').addEventListener('input', updateNewStylePreview);
+            document.getElementById('modal-font-family').addEventListener('change', updateNewStylePreview);
+            document.getElementById('modal-font-weight').addEventListener('change', updateNewStylePreview);
         }
 
         function handleFileUpload(e) {
@@ -626,6 +589,7 @@
                 const img = new Image();
                 img.onload = () => {
                     state.originalImage = img;
+                    initializeBaseCanvas();
                     resetState();
                     enableControls();
                     render();
@@ -636,6 +600,14 @@
                 img.src = e.target.result;
             };
             reader.readAsDataURL(file);
+        }
+
+        function initializeBaseCanvas() {
+            state.baseCanvas = document.createElement('canvas');
+            state.baseCanvas.width = state.originalImage.width;
+            state.baseCanvas.height = state.originalImage.height;
+            const baseCtx = state.baseCanvas.getContext('2d');
+            baseCtx.drawImage(state.originalImage, 0, 0);
         }
 
         async function detectTextInImage() {
@@ -656,10 +628,14 @@
                     state.detectedTexts.push({
                         text: word.text,
                         bbox: word.bbox,
-                        confidence: word.confidence
+                        confidence: word.confidence,
+                        fontSize: null,
+                        color: null
                     });
                 });
 
+                // Estimate font size and color for each detected text
+                estimateTextProperties();
                 displayDetectedTexts();
                 showStatus(`Detected ${state.detectedTexts.length} text elements`, 'success');
             } catch (error) {
@@ -670,77 +646,153 @@
             }
         }
 
+        function estimateTextProperties() {
+            state.detectedTexts.forEach(item => {
+                const height = item.bbox.y1 - item.bbox.y0;
+                item.fontSize = Math.max(12, Math.round(height * 0.8));
+                
+                // Sample color from center of text area
+                const centerX = Math.round((item.bbox.x0 + item.bbox.x1) / 2);
+                const centerY = Math.round((item.bbox.y0 + item.bbox.y1) / 2);
+                
+                const imageData = ctx.getImageData(centerX, centerY, 1, 1);
+                const data = imageData.data;
+                item.color = `rgb(${data[0]}, ${data[1]}, ${data[2]})`;
+                item.colorHex = rgbToHex(data[0], data[1], data[2]);
+            });
+        }
+
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
+
         function displayDetectedTexts() {
             detectedTextList.innerHTML = '';
-            textSelect.innerHTML = '<option value="">-- Choose detected text --</option>';
-
             state.detectedTexts.forEach((item, idx) => {
                 const div = document.createElement('div');
                 div.className = 'text-item';
+                div.style.cursor = 'pointer';
                 div.innerHTML = `
-                    <span class="text-item-content" title="${item.text}">${item.text}</span>
-                    <button onclick="selectDetectedText(${idx})" style="padding:0.25rem 0.5rem">Select</button>
+                    <div>
+                        <div class="text-item-content">"${item.text}"</div>
+                        <div class="text-item-meta">${item.fontSize}px • ${Math.round(item.confidence)}%</div>
+                    </div>
                 `;
+                div.addEventListener('click', () => selectDetectedText(idx));
                 detectedTextList.appendChild(div);
-
-                const option = document.createElement('option');
-                option.value = idx;
-                option.textContent = item.text;
-                textSelect.appendChild(option);
             });
 
             detectedTextList.style.display = state.detectedTexts.length > 0 ? 'block' : 'none';
-            textSelect.disabled = state.detectedTexts.length === 0;
         }
 
         function selectDetectedText(idx) {
-            textSelect.value = idx;
             state.selectedTextIndex = idx;
-            replacementText.value = state.detectedTexts[idx].text;
+            const item = state.detectedTexts[idx];
+            selectedTextDisplay.innerHTML = `<strong>"${item.text}"</strong> (${item.fontSize}px)`;
+            replacementText.value = item.text;
             replacementText.disabled = false;
             replaceTextBtn.disabled = false;
         }
 
-        function addTextOverlay() {
-            const text = document.getElementById('text-input').value;
-            if (!text) return;
+        function openReplaceModal() {
+            if (state.selectedTextIndex < 0) return;
 
-            state.textOverlays.push({
-                text: text,
-                color: document.getElementById('text-color').value,
-                size: parseInt(document.getElementById('text-size').value),
-                font: document.getElementById('font-family').value,
-                x: editorCanvas.width / 2,
-                y: editorCanvas.height / 2
+            const item = state.detectedTexts[state.selectedTextIndex];
+            document.getElementById('modal-original-text').textContent = `"${item.text}"`;
+            document.getElementById('modal-replacement-text').value = replacementText.value;
+            document.getElementById('font-size-slider').value = item.fontSize;
+            document.getElementById('detected-font-size').textContent = item.fontSize;
+            document.getElementById('modal-text-color').value = item.colorHex;
+
+            drawOriginalStylePreview(item);
+            updateNewStylePreview();
+
+            document.getElementById('replace-modal').classList.add('show');
+        }
+
+        function drawOriginalStylePreview(item) {
+            const canvas = document.getElementById('original-style-canvas');
+            const canvasCtx = canvas.getContext('2d');
+            
+            canvas.width = 400;
+            canvas.height = 100;
+            
+            canvasCtx.fillStyle = '#f8fafc';
+            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            canvasCtx.fillStyle = item.color;
+            canvasCtx.font = `bold ${item.fontSize}px Arial`;
+            canvasCtx.textAlign = 'center';
+            canvasCtx.textBaseline = 'middle';
+            canvasCtx.fillText(item.text, canvas.width / 2, canvas.height / 2);
+        }
+
+        function updateNewStylePreview() {
+            const canvas = document.getElementById('new-style-canvas');
+            const canvasCtx = canvas.getContext('2d');
+            const text = document.getElementById('modal-replacement-text').value || 'Preview';
+            const fontSize = document.getElementById('font-size-slider').value;
+            const color = document.getElementById('modal-text-color').value;
+            const fontFamily = document.getElementById('modal-font-family').value;
+            const fontWeight = document.getElementById('modal-font-weight').value;
+
+            document.getElementById('detected-font-size').textContent = fontSize;
+
+            canvas.width = 400;
+            canvas.height = 100;
+            
+            canvasCtx.fillStyle = '#f8fafc';
+            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            canvasCtx.fillStyle = color;
+            canvasCtx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+            canvasCtx.textAlign = 'center';
+            canvasCtx.textBaseline = 'middle';
+            canvasCtx.fillText(text, canvas.width / 2, canvas.height / 2);
+        }
+
+        function closeReplaceModal() {
+            document.getElementById('replace-modal').classList.remove('show');
+        }
+
+        function confirmReplace() {
+            const item = state.detectedTexts[state.selectedTextIndex];
+            const newText = document.getElementById('modal-replacement-text').value;
+            const fontSize = parseInt(document.getElementById('font-size-slider').value);
+            const color = document.getElementById('modal-text-color').value;
+            const fontFamily = document.getElementById('modal-font-family').value;
+            const fontWeight = document.getElementById('modal-font-weight').value;
+
+            if (!newText) return;
+
+            // Store replacement
+            state.textReplacements.push({
+                originalBbox: item.bbox,
+                originalText: item.text,
+                newText: newText,
+                fontSize: fontSize,
+                color: color,
+                fontFamily: fontFamily,
+                fontWeight: fontWeight
             });
 
-            document.getElementById('text-input').value = '';
             saveHistory();
             render();
-            showStatus('Text added', 'success');
+            closeReplaceModal();
+            showStatus(`Text replaced: "${item.text}" → "${newText}"`, 'success');
         }
 
         function resetState() {
-            state.rotation = 0;
-            state.flipH = 1;
-            state.flipV = 1;
-            state.filters = { brightness: 100, contrast: 100, saturation: 100 };
-            state.textOverlays = [];
+            state.textReplacements = [];
             state.detectedTexts = [];
-            state.replacedTexts = {};
+            state.selectedTextIndex = -1;
             state.history = [];
             state.historyIndex = -1;
+            selectedTextDisplay.innerHTML = '<span style="color:var(--text-muted)">-- None selected --</span>';
+            replacementText.value = '';
+            replacementText.disabled = true;
+            replaceTextBtn.disabled = true;
             saveHistory();
-            updateSliders();
-        }
-
-        function updateSliders() {
-            document.getElementById('brightness-slider').value = state.filters.brightness;
-            document.getElementById('contrast-slider').value = state.filters.contrast;
-            document.getElementById('saturation-slider').value = state.filters.saturation;
-            document.getElementById('brightness-val').textContent = state.filters.brightness + '%';
-            document.getElementById('contrast-val').textContent = state.filters.contrast + '%';
-            document.getElementById('saturation-val').textContent = state.filters.saturation + '%';
         }
 
         function enableControls() {
@@ -749,58 +801,56 @@
                 if (c.id !== 'file-input' && c.id !== 'theme-toggle') c.disabled = false;
             });
             detectTextBtn.disabled = false;
+            replaceTextBtn.disabled = true;
+            replacementText.disabled = true;
             updateUndoRedoButtons();
         }
 
         function render() {
             if (!state.originalImage) return;
 
-            const img = state.originalImage;
-            const isVertical = (state.rotation / 90) % 2 !== 0;
-            const width = isVertical ? img.height : img.width;
-            const height = isVertical ? img.width : img.height;
-            
-            editorCanvas.width = width;
-            editorCanvas.height = height;
+            editorCanvas.width = state.originalImage.width;
+            editorCanvas.height = state.originalImage.height;
 
-            ctx.clearRect(0, 0, width, height);
-            
-            // Apply Filters
-            ctx.filter = `
-                brightness(${state.filters.brightness}%) 
-                contrast(${state.filters.contrast}%) 
-                saturate(${state.filters.saturation}%)
-            `;
+            // Start with base image
+            ctx.drawImage(state.originalImage, 0, 0);
 
-            // Apply Transforms
-            ctx.save();
-            ctx.translate(width / 2, height / 2);
-            ctx.rotate((state.rotation * Math.PI) / 180);
-            ctx.scale(state.flipH, state.flipV);
-            ctx.drawImage(img, -img.width / 2, -img.height / 2);
-            ctx.restore();
+            // Apply text replacements
+            state.textReplacements.forEach(replacement => {
+                const bbox = replacement.originalBbox;
+                const width = bbox.x1 - bbox.x0;
+                const height = bbox.y1 - bbox.y0;
 
-            // Reset filter for text
-            ctx.filter = 'none';
+                // Patch the background (erase original text)
+                const patchData = state.baseCanvas.getContext('2d').getImageData(
+                    Math.max(0, bbox.x0 - 2),
+                    Math.max(0, bbox.y0 - 2),
+                    Math.min(state.baseCanvas.width, width + 4),
+                    Math.min(state.baseCanvas.height, height + 4)
+                );
 
-            // Draw Text Overlays
-            state.textOverlays.forEach(item => {
-                ctx.fillStyle = item.color;
-                ctx.font = `bold ${item.size}px ${item.font}`;
+                ctx.putImageData(
+                    patchData,
+                    Math.max(0, bbox.x0 - 2),
+                    Math.max(0, bbox.y0 - 2)
+                );
+
+                // Draw new text
+                ctx.fillStyle = replacement.color;
+                ctx.font = `${replacement.fontWeight} ${replacement.fontSize}px ${replacement.fontFamily}`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(item.text, item.x, item.y);
+                ctx.fillText(
+                    replacement.newText,
+                    bbox.x0 + width / 2,
+                    bbox.y0 + height / 2
+                );
             });
         }
 
         function saveHistory() {
             const snapshot = JSON.stringify({
-                rotation: state.rotation,
-                flipH: state.flipH,
-                flipV: state.flipV,
-                filters: { ...state.filters },
-                textOverlays: [...state.textOverlays],
-                replacedTexts: { ...state.replacedTexts }
+                textReplacements: JSON.parse(JSON.stringify(state.textReplacements))
             });
             
             if (state.historyIndex < state.history.length - 1) {
@@ -834,13 +884,7 @@
 
         function applyHistoryState() {
             const data = JSON.parse(state.history[state.historyIndex]);
-            state.rotation = data.rotation;
-            state.flipH = data.flipH;
-            state.flipV = data.flipV;
-            state.filters = data.filters;
-            state.textOverlays = data.textOverlays;
-            state.replacedTexts = data.replacedTexts;
-            updateSliders();
+            state.textReplacements = data.textReplacements;
             render();
             updateUndoRedoButtons();
         }
@@ -860,37 +904,10 @@
 
         function download() {
             const link = document.createElement('a');
-            link.download = 'edited-image.png';
+            link.download = 'exact-replica-image.png';
             link.href = editorCanvas.toDataURL('image/png');
             link.click();
             showStatus('Image downloaded', 'success');
-        }
-
-        function closeReplaceModal() {
-            document.getElementById('replace-modal').classList.remove('show');
-        }
-
-        function confirmReplace() {
-            const newText = document.getElementById('modal-replacement-text').value;
-            if (!newText || state.selectedTextIndex < 0) return;
-
-            const original = state.detectedTexts[state.selectedTextIndex];
-            state.replacedTexts[original.text] = newText;
-
-            // Add as text overlay
-            state.textOverlays.push({
-                text: newText,
-                color: '#000000',
-                size: 40,
-                font: 'Arial',
-                x: original.bbox.x0 + (original.bbox.x1 - original.bbox.x0) / 2,
-                y: original.bbox.y0 + (original.bbox.y1 - original.bbox.y0) / 2
-            });
-
-            saveHistory();
-            render();
-            closeReplaceModal();
-            showStatus(`Text replaced: "${original.text}" → "${newText}"`, 'success');
         }
 
         function showStatus(message, type = 'info') {
