@@ -2,30 +2,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exact Replica Image Editor</title>
+    <title>Manus Image Pro - Professional Image Editor</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --bg: #f8fafc;
+            --primary: #0066cc;
+            --primary-hover: #0052a3;
+            --secondary: #ff6b35;
+            --bg: #f5f7fa;
             --surface: #ffffff;
-            --text: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --radius: 8px;
-            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-        }
-
-        [data-theme="dark"] {
-            --bg: #0f172a;
-            --surface: #1e293b;
-            --text: #f1f5f9;
-            --text-muted: #94a3b8;
-            --border: #334155;
+            --text: #1a1a1a;
+            --text-muted: #666666;
+            --border: #ddd;
+            --radius: 6px;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-lg: 0 4px 16px rgba(0,0,0,0.15);
         }
 
         * {
@@ -36,42 +27,54 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
+            background: var(--bg);
             color: var(--text);
-            line-height: 1.5;
             height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
         }
 
         /* Header */
         header {
-            background-color: var(--surface);
-            border-bottom: 1px solid var(--border);
-            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+            color: white;
+            padding: 1rem 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            z-index: 100;
-            position: sticky;
-            top: 0;
+            box-shadow: var(--shadow-lg);
         }
 
         .logo {
-            font-weight: 700;
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--primary);
+            font-weight: 800;
+            font-size: 1.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span {
+            color: #ff6b35;
         }
 
         .header-actions {
             display: flex;
-            gap: 0.75rem;
+            gap: 1rem;
             align-items: center;
-            flex-wrap: wrap;
+        }
+
+        .header-actions button {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .header-actions button:hover {
+            background: rgba(255,255,255,0.3);
         }
 
         /* Main Layout */
@@ -81,141 +84,74 @@
             overflow: hidden;
         }
 
-        /* Sidebar Controls */
+        /* Sidebar */
         .sidebar {
-            width: 380px;
-            background-color: var(--surface);
+            width: 320px;
+            background: var(--surface);
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             overflow-y: auto;
+            box-shadow: var(--shadow);
         }
 
-        .control-group {
-            padding: 1.25rem;
+        .panel {
             border-bottom: 1px solid var(--border);
         }
 
-        .control-group h3 {
-            font-size: 0.875rem;
+        .panel-header {
+            padding: 1rem;
+            background: var(--bg);
             font-weight: 600;
-            margin-bottom: 1rem;
-            color: var(--text-muted);
+            font-size: 0.875rem;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
         }
 
-        .control-item {
+        .panel-header:hover {
+            background: #f0f2f5;
+        }
+
+        .panel-content {
+            padding: 1rem;
+            display: none;
+        }
+
+        .panel-content.active {
+            display: block;
+        }
+
+        .control-group {
             margin-bottom: 1rem;
         }
 
-        .control-item:last-child {
+        .control-group:last-child {
             margin-bottom: 0;
         }
 
         .control-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-        }
-
-        /* Editor Workspace */
-        .workspace {
-            flex: 1;
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            overflow: auto;
-            position: relative;
-            background-image: radial-gradient(var(--border) 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-
-        .canvas-container {
-            position: relative;
-            box-shadow: var(--shadow);
-            background-color: white;
-            max-width: 100%;
-            max-height: 100%;
-            display: none;
-        }
-
-        #editor-canvas {
-            max-width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        /* Upload Area */
-        .upload-placeholder {
-            border: 2px dashed var(--border);
-            border-radius: var(--radius);
-            padding: 4rem 2rem;
-            text-align: center;
-            cursor: pointer;
-            transition: border-color 0.2s;
-            max-width: 400px;
-            width: 100%;
-        }
-
-        .upload-placeholder:hover {
-            border-color: var(--primary);
-        }
-
-        .upload-placeholder svg {
-            width: 48px;
-            height: 48px;
-            color: var(--text-muted);
-            margin-bottom: 1rem;
-        }
-
-        /* UI Components */
-        button {
-            cursor: pointer;
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            background: var(--surface);
-            color: var(--text);
-            padding: 0.5rem 1rem;
             font-size: 0.875rem;
             font-weight: 500;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
         }
 
-        button:hover {
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 0.625rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.875rem;
             background: var(--bg);
-            border-color: var(--text-muted);
-        }
-
-        button.primary {
-            background: var(--primary);
-            color: white;
-            border: none;
-        }
-
-        button.primary:hover {
-            background: var(--primary-hover);
-        }
-
-        button.success {
-            background: var(--success);
-            color: white;
-            border: none;
-        }
-
-        button.success:hover {
-            background: #059669;
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+            color: var(--text);
+            margin-bottom: 0.5rem;
         }
 
         input[type="range"] {
@@ -223,31 +159,113 @@
             accent-color: var(--primary);
         }
 
-        input[type="number"], input[type="text"], select {
+        input[type="color"] {
             width: 100%;
-            padding: 0.5rem;
-            border-radius: var(--radius);
+            height: 40px;
             border: 1px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.625rem 1rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button.secondary {
             background: var(--bg);
             color: var(--text);
+            border: 1px solid var(--border);
         }
 
-        .tool-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
+        button.secondary:hover {
+            background: #f0f2f5;
         }
 
-        /* Detected Text List */
-        .detected-text-list {
-            max-height: 200px;
+        button.danger {
+            background: #dc3545;
+        }
+
+        button.danger:hover {
+            background: #c82333;
+        }
+
+        /* Canvas Area */
+        .canvas-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(45deg, #f5f7fa 25%, transparent 25%, transparent 75%, #f5f7fa 75%, #f5f7fa),
+                        linear-gradient(45deg, #f5f7fa 25%, transparent 25%, transparent 75%, #f5f7fa 75%, #f5f7fa);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+            background-color: #e8eaed;
+            overflow: auto;
+            position: relative;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            display: inline-block;
+            background: white;
+            box-shadow: var(--shadow-lg);
+        }
+
+        #main-canvas {
+            display: block;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .upload-zone {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .upload-zone svg {
+            width: 64px;
+            height: 64px;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .upload-zone p {
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Layers Panel */
+        .layers-list {
+            max-height: 300px;
             overflow-y: auto;
             border: 1px solid var(--border);
             border-radius: var(--radius);
             background: var(--bg);
         }
 
-        .text-item {
+        .layer-item {
             padding: 0.75rem;
             border-bottom: 1px solid var(--border);
             display: flex;
@@ -258,56 +276,50 @@
             transition: background 0.2s;
         }
 
-        .text-item:hover {
-            background: var(--border);
+        .layer-item:hover {
+            background: #f0f2f5;
         }
 
-        .text-item:last-child {
-            border-bottom: none;
+        .layer-item.active {
+            background: var(--primary);
+            color: white;
         }
 
-        .text-item-content {
+        .layer-item-content {
             flex: 1;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        .text-item-meta {
+        .layer-item-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .layer-item-actions button {
+            width: auto;
+            padding: 0.25rem 0.5rem;
             font-size: 0.75rem;
+            background: transparent;
             color: var(--text-muted);
-            margin-left: 0.5rem;
+            border: 1px solid var(--border);
         }
 
-        /* Status Messages */
-        .status-message {
-            padding: 0.75rem 1rem;
-            border-radius: var(--radius);
+        .layer-item.active .layer-item-actions button {
+            color: white;
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 0.75rem 1.5rem;
             font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-            display: none;
-        }
-
-        .status-message.show {
-            display: block;
-        }
-
-        .status-message.info {
-            background: #dbeafe;
-            color: #1e40af;
-            border: 1px solid #93c5fd;
-        }
-
-        .status-message.success {
-            background: #dcfce7;
-            color: #166534;
-            border: 1px solid #86efac;
-        }
-
-        .status-message.error {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fca5a5;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
         }
 
         /* Modal */
@@ -334,161 +346,258 @@
             padding: 2rem;
             max-width: 600px;
             width: 90%;
-            box-shadow: var(--shadow);
+            box-shadow: var(--shadow-lg);
             max-height: 80vh;
             overflow-y: auto;
         }
 
-        .modal-content h2 {
-            margin-bottom: 1rem;
-        }
-
-        .modal-content input {
-            margin-bottom: 1rem;
+        .modal-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
         }
 
         .modal-actions {
             display: flex;
-            gap: 0.5rem;
+            gap: 1rem;
             justify-content: flex-end;
-            margin-top: 1.5rem;
+            margin-top: 2rem;
         }
 
-        .style-preview {
-            padding: 1rem;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            background: var(--bg);
+        .modal-actions button {
+            width: auto;
+            padding: 0.625rem 1.5rem;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            gap: 0.5rem;
             margin-bottom: 1rem;
-            text-align: center;
         }
 
-        /* Hidden elements */
-        #file-input { display: none; }
+        .toolbar button {
+            flex: 1;
+            padding: 0.625rem;
+            font-size: 0.75rem;
+        }
 
-        /* Responsive */
+        /* Alert */
+        .alert {
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        #file-input {
+            display: none;
+        }
+
         @media (max-width: 768px) {
-            main { flex-direction: column; }
-            .sidebar { width: 100%; height: auto; border-right: none; border-top: 1px solid var(--border); }
-            .workspace { height: 300px; }
-            .header-actions { gap: 0.25rem; }
-            button { padding: 0.4rem 0.8rem; font-size: 0.75rem; }
+            main {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-top: 1px solid var(--border);
+            }
         }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-            Exact Replica Editor
-        </div>
+        <div class="logo">Manus Image <span>Pro</span></div>
         <div class="header-actions">
-            <button id="theme-toggle" title="Toggle Dark Mode">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-            </button>
-            <button id="undo-btn" disabled>Undo</button>
-            <button id="redo-btn" disabled>Redo</button>
+            <button id="undo-btn" disabled>↶ Undo</button>
+            <button id="redo-btn" disabled>↷ Redo</button>
             <button id="reset-btn" disabled>Reset</button>
-            <button id="download-btn" class="primary" disabled>Download</button>
+            <button id="download-btn" disabled style="background: var(--secondary);">⬇ Download</button>
         </div>
     </header>
 
     <main>
         <div class="sidebar">
-            <div class="control-group">
-                <h3>Image Source</h3>
-                <button onclick="document.getElementById('file-input').click()" style="width:100%">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-                    Upload Image
-                </button>
-                <input type="file" id="file-input" accept="image/*">
-                <div id="status-message" class="status-message"></div>
+            <!-- Upload Panel -->
+            <div class="panel">
+                <div class="panel-header" onclick="togglePanel(this)">
+                    📁 Image
+                </div>
+                <div class="panel-content active">
+                    <button onclick="document.getElementById('file-input').click()" style="margin-bottom: 1rem;">
+                        ⬆ Upload Image
+                    </button>
+                    <input type="file" id="file-input" accept="image/*">
+                    <div id="upload-alert" class="alert"></div>
+                </div>
             </div>
 
-            <div class="control-group">
-                <h3>Text Detection (OCR)</h3>
-                <button id="detect-text-btn" disabled style="width:100%; margin-bottom:0.5rem">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-                    Detect Text
-                </button>
-                <div id="detected-text-list" class="detected-text-list" style="display:none;"></div>
+            <!-- OCR Panel -->
+            <div class="panel">
+                <div class="panel-header" onclick="togglePanel(this)">
+                    🔍 Detect Text (OCR)
+                </div>
+                <div class="panel-content">
+                    <button id="detect-btn" disabled style="margin-bottom: 1rem;">Detect Text</button>
+                    <div id="detected-list" class="layers-list" style="display: none;"></div>
+                </div>
             </div>
 
-            <div class="control-group">
-                <h3>Text Replacement</h3>
-                <div class="control-item">
-                    <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">Selected Text:</label>
-                    <div id="selected-text-display" style="padding:0.5rem; background:var(--bg); border-radius:var(--radius); font-size:0.875rem; min-height:2rem; display:flex; align-items:center;">
-                        <span style="color:var(--text-muted)">-- None selected --</span>
+            <!-- Text Replacement Panel -->
+            <div class="panel">
+                <div class="panel-header" onclick="togglePanel(this)">
+                    ✏️ Replace Text
+                </div>
+                <div class="panel-content">
+                    <div class="control-group">
+                        <div class="control-label">Original Text</div>
+                        <div id="selected-text" style="padding: 0.625rem; background: var(--bg); border-radius: var(--radius); font-size: 0.875rem; min-height: 2rem; display: flex; align-items: center;">
+                            <span style="color: var(--text-muted)">-- None selected --</span>
+                        </div>
                     </div>
+
+                    <div class="control-group">
+                        <div class="control-label">New Text</div>
+                        <input type="text" id="new-text" placeholder="Enter replacement text" disabled>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">Font Size (px)</div>
+                        <input type="number" id="font-size" value="40" min="8" max="200" disabled>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">Font Family</div>
+                        <select id="font-family" disabled>
+                            <option value="Arial">Arial</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Verdana">Verdana</option>
+                            <option value="Comic Sans MS">Comic Sans MS</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">Font Weight</div>
+                        <select id="font-weight" disabled>
+                            <option value="normal">Normal</option>
+                            <option value="bold">Bold</option>
+                            <option value="lighter">Lighter</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">Text Color</div>
+                        <input type="color" id="text-color" value="#000000" disabled>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">Opacity</div>
+                        <input type="range" id="opacity" min="0" max="100" value="100" disabled>
+                    </div>
+
+                    <button id="replace-btn" disabled style="margin-bottom: 1rem;">Apply Replacement</button>
                 </div>
-                <div class="control-item">
-                    <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">New Text:</label>
-                    <input type="text" id="replacement-text" placeholder="Enter replacement text" disabled>
+            </div>
+
+            <!-- Layers Panel -->
+            <div class="panel">
+                <div class="panel-header" onclick="togglePanel(this)">
+                    📚 Layers
                 </div>
-                <button id="replace-text-btn" disabled style="width:100%">Replace with Auto-Style</button>
+                <div class="panel-content">
+                    <div id="layers-list" class="layers-list"></div>
+                    <button class="secondary" id="clear-layers-btn" disabled style="margin-top: 1rem;">Clear All</button>
+                </div>
+            </div>
+
+            <!-- Tools Panel -->
+            <div class="panel">
+                <div class="panel-header" onclick="togglePanel(this)">
+                    🛠️ Tools
+                </div>
+                <div class="panel-content">
+                    <div class="toolbar">
+                        <button class="secondary" id="color-picker-btn" disabled title="Pick color from image">🎨 Color Picker</button>
+                    </div>
+                    <button class="secondary" id="zoom-fit-btn" disabled>Fit to Screen</button>
+                </div>
             </div>
         </div>
 
-        <div class="workspace" id="drop-zone">
-            <div class="upload-placeholder" id="upload-ui">
+        <div class="canvas-area" id="canvas-area">
+            <div class="upload-zone">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-                <p>Drag and drop an image here<br>or click to upload</p>
-            </div>
-
-            <div class="canvas-container" id="canvas-ui">
-                <canvas id="editor-canvas"></canvas>
+                <p><strong>Upload an image to get started</strong></p>
+                <p style="font-size: 0.875rem; color: var(--text-muted);">Drag and drop or click to select</p>
             </div>
         </div>
     </main>
 
+    <div class="status-bar">
+        <span id="status-left">Ready</span>
+        <span id="status-right"></span>
+    </div>
+
     <!-- Text Replacement Modal -->
     <div class="modal" id="replace-modal">
         <div class="modal-content">
-            <h2>Replace Text with Auto-Style Matching</h2>
+            <div class="modal-header">Replace Text</div>
             
-            <div class="control-item">
-                <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">Original Text:</label>
-                <div style="padding:0.5rem; background:var(--bg); border-radius:var(--radius); font-size:0.875rem; margin-bottom:1rem;">
-                    <span id="modal-original-text"></span>
-                </div>
+            <div class="control-group">
+                <div class="control-label">Original: <strong id="modal-original"></strong></div>
             </div>
 
-            <div class="style-preview" id="style-preview">
-                <p style="margin-bottom:0.5rem; font-size:0.75rem; color:var(--text-muted)">Original Style Preview:</p>
-                <canvas id="original-style-canvas" style="max-width:100%; max-height:150px;"></canvas>
+            <div class="control-group">
+                <div class="control-label">New Text</div>
+                <input type="text" id="modal-new-text" placeholder="Enter replacement text">
             </div>
 
-            <div class="control-item">
-                <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">New Text:</label>
-                <input type="text" id="modal-replacement-text" placeholder="Enter replacement text">
+            <div class="control-group">
+                <div class="control-label">Font Size (px): <span id="modal-font-size-val">40</span></div>
+                <input type="range" id="modal-font-size" min="8" max="200" value="40">
             </div>
 
-            <div class="control-item">
-                <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">Detected Font Size: <span id="detected-font-size">40</span>px</label>
-                <input type="range" id="font-size-slider" min="8" max="200" value="40">
-            </div>
-
-            <div class="control-item">
-                <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">Detected Text Color:</label>
-                <input type="color" id="modal-text-color" value="#000000" style="height:40px; padding:2px">
-            </div>
-
-            <div class="control-item">
-                <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">Font Family:</label>
+            <div class="control-group">
+                <div class="control-label">Font Family</div>
                 <select id="modal-font-family">
-                    <option value="Arial">Arial (Sans-Serif)</option>
-                    <option value="Georgia">Georgia (Serif)</option>
-                    <option value="Times New Roman">Times New Roman (Serif)</option>
-                    <option value="Courier New">Courier New (Monospace)</option>
-                    <option value="Verdana">Verdana (Sans-Serif)</option>
-                    <option value="Trebuchet MS">Trebuchet MS (Sans-Serif)</option>
+                    <option value="Arial">Arial</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Verdana">Verdana</option>
                 </select>
             </div>
 
-            <div class="control-item">
-                <label style="font-size:0.875rem; margin-bottom:0.5rem; display:block">Font Weight:</label>
+            <div class="control-group">
+                <div class="control-label">Font Weight</div>
                 <select id="modal-font-weight">
                     <option value="normal">Normal</option>
                     <option value="bold">Bold</option>
@@ -496,86 +605,87 @@
                 </select>
             </div>
 
-            <div class="style-preview" id="new-style-preview">
-                <p style="margin-bottom:0.5rem; font-size:0.75rem; color:var(--text-muted)">New Text Preview:</p>
-                <canvas id="new-style-canvas" style="max-width:100%; max-height:150px;"></canvas>
+            <div class="control-group">
+                <div class="control-label">Text Color</div>
+                <input type="color" id="modal-text-color" value="#000000">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">Opacity: <span id="modal-opacity-val">100</span>%</div>
+                <input type="range" id="modal-opacity" min="0" max="100" value="100">
             </div>
 
             <div class="modal-actions">
-                <button onclick="closeReplaceModal()">Cancel</button>
-                <button class="success" onclick="confirmReplace()">Apply Replacement</button>
+                <button class="secondary" onclick="closeReplaceModal()">Cancel</button>
+                <button onclick="confirmReplace()">Apply</button>
             </div>
         </div>
     </div>
 
     <script>
-        // State Management
+        // State
         const state = {
             originalImage: null,
-            baseCanvas: null,
+            originalCanvas: null,
+            mainCanvas: null,
+            ctx: null,
             detectedTexts: [],
             selectedTextIndex: -1,
+            layers: [],
             history: [],
             historyIndex: -1,
-            textReplacements: []
+            colorPickerMode: false
         };
 
-        // DOM Elements
+        // DOM
         const fileInput = document.getElementById('file-input');
-        const uploadUI = document.getElementById('upload-ui');
-        const canvasUI = document.getElementById('canvas-ui');
-        const editorCanvas = document.getElementById('editor-canvas');
-        const ctx = editorCanvas.getContext('2d');
-        const dropZone = document.getElementById('drop-zone');
-        const statusMessage = document.getElementById('status-message');
-        const detectTextBtn = document.getElementById('detect-text-btn');
-        const detectedTextList = document.getElementById('detected-text-list');
-        const replacementText = document.getElementById('replacement-text');
-        const replaceTextBtn = document.getElementById('replace-text-btn');
-        const selectedTextDisplay = document.getElementById('selected-text-display');
+        const mainCanvas = document.getElementById('main-canvas');
+        const canvasArea = document.getElementById('canvas-area');
+        const detectBtn = document.getElementById('detect-btn');
+        const detectedList = document.getElementById('detected-list');
+        const selectedTextDisplay = document.getElementById('selected-text');
+        const newTextInput = document.getElementById('new-text');
+        const replaceBtn = document.getElementById('replace-btn');
+        const undoBtn = document.getElementById('undo-btn');
+        const redoBtn = document.getElementById('redo-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const downloadBtn = document.getElementById('download-btn');
 
-        // Initialization
         function init() {
             setupEventListeners();
-            applyTheme();
+            setupDragDrop();
         }
 
         function setupEventListeners() {
             fileInput.addEventListener('change', handleFileUpload);
-            
-            // Drag and Drop
-            dropZone.addEventListener('dragover', (e) => e.preventDefault());
-            dropZone.addEventListener('drop', (e) => {
+            detectBtn.addEventListener('click', detectText);
+            replaceBtn.addEventListener('click', openReplaceModal);
+            undoBtn.addEventListener('click', undo);
+            redoBtn.addEventListener('click', redo);
+            resetBtn.addEventListener('click', reset);
+            downloadBtn.addEventListener('click', download);
+            document.getElementById('zoom-fit-btn').addEventListener('click', zoomFit);
+            document.getElementById('clear-layers-btn').addEventListener('click', clearLayers);
+            document.getElementById('color-picker-btn').addEventListener('click', toggleColorPicker);
+
+            // Modal inputs
+            document.getElementById('modal-font-size').addEventListener('input', (e) => {
+                document.getElementById('modal-font-size-val').textContent = e.target.value;
+            });
+            document.getElementById('modal-opacity').addEventListener('input', (e) => {
+                document.getElementById('modal-opacity-val').textContent = e.target.value;
+            });
+        }
+
+        function setupDragDrop() {
+            canvasArea.addEventListener('dragover', (e) => e.preventDefault());
+            canvasArea.addEventListener('drop', (e) => {
                 e.preventDefault();
                 const file = e.dataTransfer.files[0];
-                if (file && file.type.startsWith('image/')) handleFile(file);
+                if (file && file.type.startsWith('image/')) {
+                    handleFile(file);
+                }
             });
-            uploadUI.addEventListener('click', () => fileInput.click());
-
-            // Text Detection
-            detectTextBtn.addEventListener('click', detectTextInImage);
-
-            // Text Replacement
-            replaceTextBtn.addEventListener('click', openReplaceModal);
-
-            // Actions
-            document.getElementById('undo-btn').addEventListener('click', undo);
-            document.getElementById('redo-btn').addEventListener('click', redo);
-            document.getElementById('reset-btn').addEventListener('click', reset);
-            document.getElementById('download-btn').addEventListener('click', download);
-
-            document.getElementById('theme-toggle').addEventListener('click', () => {
-                const theme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-                document.body.setAttribute('data-theme', theme);
-                localStorage.setItem('theme', theme);
-            });
-
-            // Preview updates
-            document.getElementById('modal-replacement-text').addEventListener('input', updateNewStylePreview);
-            document.getElementById('font-size-slider').addEventListener('input', updateNewStylePreview);
-            document.getElementById('modal-text-color').addEventListener('input', updateNewStylePreview);
-            document.getElementById('modal-font-family').addEventListener('change', updateNewStylePreview);
-            document.getElementById('modal-font-weight').addEventListener('change', updateNewStylePreview);
         }
 
         function handleFileUpload(e) {
@@ -589,166 +699,144 @@
                 const img = new Image();
                 img.onload = () => {
                     state.originalImage = img;
-                    initializeBaseCanvas();
+                    initializeCanvases();
                     resetState();
                     enableControls();
                     render();
-                    uploadUI.style.display = 'none';
-                    canvasUI.style.display = 'block';
-                    showStatus(`Image loaded: ${img.width}x${img.height}px`, 'success');
+                    showStatus('Image loaded successfully', 'success');
                 };
                 img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
 
-        function initializeBaseCanvas() {
-            state.baseCanvas = document.createElement('canvas');
-            state.baseCanvas.width = state.originalImage.width;
-            state.baseCanvas.height = state.originalImage.height;
-            const baseCtx = state.baseCanvas.getContext('2d');
-            baseCtx.drawImage(state.originalImage, 0, 0);
-        }
+        function initializeCanvases() {
+            // Create original canvas for patching
+            state.originalCanvas = document.createElement('canvas');
+            state.originalCanvas.width = state.originalImage.width;
+            state.originalCanvas.height = state.originalImage.height;
+            const origCtx = state.originalCanvas.getContext('2d');
+            origCtx.drawImage(state.originalImage, 0, 0);
 
-        async function detectTextInImage() {
-            if (!state.originalImage) return;
-            
-            showStatus('Detecting text... This may take a moment', 'info');
-            detectTextBtn.disabled = true;
-
-            try {
-                const result = await Tesseract.recognize(state.originalImage.src, 'eng', {
-                    logger: m => console.log(m)
-                });
-
-                state.detectedTexts = [];
-                const words = result.data.words.filter(w => w.confidence > 30);
-                
-                words.forEach(word => {
-                    state.detectedTexts.push({
-                        text: word.text,
-                        bbox: word.bbox,
-                        confidence: word.confidence,
-                        fontSize: null,
-                        color: null
-                    });
-                });
-
-                // Estimate font size and color for each detected text
-                estimateTextProperties();
-                displayDetectedTexts();
-                showStatus(`Detected ${state.detectedTexts.length} text elements`, 'success');
-            } catch (error) {
-                showStatus(`OCR Error: ${error.message}`, 'error');
-                console.error(error);
-            } finally {
-                detectTextBtn.disabled = false;
+            // Create main canvas
+            if (!state.mainCanvas) {
+                state.mainCanvas = document.createElement('canvas');
+                state.mainCanvas.id = 'main-canvas';
+                const uploadZone = canvasArea.querySelector('.upload-zone');
+                if (uploadZone) uploadZone.remove();
+                canvasArea.innerHTML = '';
+                const wrapper = document.createElement('div');
+                wrapper.className = 'canvas-wrapper';
+                wrapper.appendChild(state.mainCanvas);
+                canvasArea.appendChild(wrapper);
             }
+
+            state.mainCanvas.width = state.originalImage.width;
+            state.mainCanvas.height = state.originalImage.height;
+            state.ctx = state.mainCanvas.getContext('2d');
+
+            // Add click listener for color picker
+            state.mainCanvas.addEventListener('click', handleCanvasClick);
         }
 
-        function estimateTextProperties() {
-            state.detectedTexts.forEach(item => {
-                const height = item.bbox.y1 - item.bbox.y0;
-                item.fontSize = Math.max(12, Math.round(height * 0.8));
-                
-                // Sample color from center of text area
-                const centerX = Math.round((item.bbox.x0 + item.bbox.x1) / 2);
-                const centerY = Math.round((item.bbox.y0 + item.bbox.y1) / 2);
-                
-                const imageData = ctx.getImageData(centerX, centerY, 1, 1);
-                const data = imageData.data;
-                item.color = `rgb(${data[0]}, ${data[1]}, ${data[2]})`;
-                item.colorHex = rgbToHex(data[0], data[1], data[2]);
-            });
+        function handleCanvasClick(e) {
+            if (!state.colorPickerMode) return;
+
+            const rect = state.mainCanvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) * (state.mainCanvas.width / rect.width));
+            const y = Math.floor((e.clientY - rect.top) * (state.mainCanvas.height / rect.height));
+
+            const imageData = state.ctx.getImageData(x, y, 1, 1);
+            const data = imageData.data;
+            const hex = '#' + ('000000' + 'rgb(' + data[0] + ',' + data[1] + ',' + data[2] + ')'.match(/\d+/g).map(x => ('0' + parseInt(x).toString(16)).slice(-2)).join('').toUpperCase()).slice(-6);
+            
+            document.getElementById('text-color').value = rgbToHex(data[0], data[1], data[2]);
+            state.colorPickerMode = false;
+            state.mainCanvas.style.cursor = 'default';
+            showStatus('Color picked', 'success');
         }
 
         function rgbToHex(r, g, b) {
             return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
         }
 
+        function toggleColorPicker() {
+            state.colorPickerMode = !state.colorPickerMode;
+            state.mainCanvas.style.cursor = state.colorPickerMode ? 'crosshair' : 'default';
+            showStatus(state.colorPickerMode ? 'Click on image to pick color' : 'Color picker disabled', 'info');
+        }
+
+        async function detectText() {
+            if (!state.originalImage) return;
+
+            detectBtn.disabled = true;
+            showStatus('Detecting text...', 'info');
+
+            try {
+                const result = await Tesseract.recognize(state.originalImage.src, 'eng');
+                state.detectedTexts = result.data.words.filter(w => w.confidence > 30);
+
+                displayDetectedTexts();
+                showStatus(`Detected ${state.detectedTexts.length} text elements`, 'success');
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                detectBtn.disabled = false;
+            }
+        }
+
         function displayDetectedTexts() {
-            detectedTextList.innerHTML = '';
+            detectedList.innerHTML = '';
             state.detectedTexts.forEach((item, idx) => {
                 const div = document.createElement('div');
-                div.className = 'text-item';
-                div.style.cursor = 'pointer';
+                div.className = 'layer-item';
                 div.innerHTML = `
-                    <div>
-                        <div class="text-item-content">"${item.text}"</div>
-                        <div class="text-item-meta">${item.fontSize}px • ${Math.round(item.confidence)}%</div>
+                    <div class="layer-item-content">"${item.text}"</div>
+                    <div class="layer-item-actions">
+                        <button onclick="selectDetectedText(${idx})">Select</button>
                     </div>
                 `;
-                div.addEventListener('click', () => selectDetectedText(idx));
-                detectedTextList.appendChild(div);
+                detectedList.appendChild(div);
             });
-
-            detectedTextList.style.display = state.detectedTexts.length > 0 ? 'block' : 'none';
+            detectedList.style.display = state.detectedTexts.length > 0 ? 'block' : 'none';
         }
 
         function selectDetectedText(idx) {
             state.selectedTextIndex = idx;
             const item = state.detectedTexts[idx];
-            selectedTextDisplay.innerHTML = `<strong>"${item.text}"</strong> (${item.fontSize}px)`;
-            replacementText.value = item.text;
-            replacementText.disabled = false;
-            replaceTextBtn.disabled = false;
+            const height = item.bbox.y1 - item.bbox.y0;
+            const fontSize = Math.max(12, Math.round(height * 0.8));
+
+            selectedTextDisplay.innerHTML = `<strong>"${item.text}"</strong> (${fontSize}px)`;
+            newTextInput.value = item.text;
+            document.getElementById('font-size').value = fontSize;
+            
+            newTextInput.disabled = false;
+            replaceBtn.disabled = false;
+            document.getElementById('font-size').disabled = false;
+            document.getElementById('font-family').disabled = false;
+            document.getElementById('font-weight').disabled = false;
+            document.getElementById('text-color').disabled = false;
+            document.getElementById('opacity').disabled = false;
         }
 
         function openReplaceModal() {
             if (state.selectedTextIndex < 0) return;
 
             const item = state.detectedTexts[state.selectedTextIndex];
-            document.getElementById('modal-original-text').textContent = `"${item.text}"`;
-            document.getElementById('modal-replacement-text').value = replacementText.value;
-            document.getElementById('font-size-slider').value = item.fontSize;
-            document.getElementById('detected-font-size').textContent = item.fontSize;
-            document.getElementById('modal-text-color').value = item.colorHex;
+            const height = item.bbox.y1 - item.bbox.y0;
+            const fontSize = Math.max(12, Math.round(height * 0.8));
 
-            drawOriginalStylePreview(item);
-            updateNewStylePreview();
+            document.getElementById('modal-original').textContent = `"${item.text}"`;
+            document.getElementById('modal-new-text').value = newTextInput.value;
+            document.getElementById('modal-font-size').value = fontSize;
+            document.getElementById('modal-font-size-val').textContent = fontSize;
+            document.getElementById('modal-font-family').value = document.getElementById('font-family').value;
+            document.getElementById('modal-font-weight').value = document.getElementById('font-weight').value;
+            document.getElementById('modal-text-color').value = document.getElementById('text-color').value;
+            document.getElementById('modal-opacity').value = document.getElementById('opacity').value;
 
             document.getElementById('replace-modal').classList.add('show');
-        }
-
-        function drawOriginalStylePreview(item) {
-            const canvas = document.getElementById('original-style-canvas');
-            const canvasCtx = canvas.getContext('2d');
-            
-            canvas.width = 400;
-            canvas.height = 100;
-            
-            canvasCtx.fillStyle = '#f8fafc';
-            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            canvasCtx.fillStyle = item.color;
-            canvasCtx.font = `bold ${item.fontSize}px Arial`;
-            canvasCtx.textAlign = 'center';
-            canvasCtx.textBaseline = 'middle';
-            canvasCtx.fillText(item.text, canvas.width / 2, canvas.height / 2);
-        }
-
-        function updateNewStylePreview() {
-            const canvas = document.getElementById('new-style-canvas');
-            const canvasCtx = canvas.getContext('2d');
-            const text = document.getElementById('modal-replacement-text').value || 'Preview';
-            const fontSize = document.getElementById('font-size-slider').value;
-            const color = document.getElementById('modal-text-color').value;
-            const fontFamily = document.getElementById('modal-font-family').value;
-            const fontWeight = document.getElementById('modal-font-weight').value;
-
-            document.getElementById('detected-font-size').textContent = fontSize;
-
-            canvas.width = 400;
-            canvas.height = 100;
-            
-            canvasCtx.fillStyle = '#f8fafc';
-            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            canvasCtx.fillStyle = color;
-            canvasCtx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-            canvasCtx.textAlign = 'center';
-            canvasCtx.textBaseline = 'middle';
-            canvasCtx.fillText(text, canvas.width / 2, canvas.height / 2);
         }
 
         function closeReplaceModal() {
@@ -756,115 +844,172 @@
         }
 
         function confirmReplace() {
+            if (state.selectedTextIndex < 0) return;
+
             const item = state.detectedTexts[state.selectedTextIndex];
-            const newText = document.getElementById('modal-replacement-text').value;
-            const fontSize = parseInt(document.getElementById('font-size-slider').value);
-            const color = document.getElementById('modal-text-color').value;
+            const newText = document.getElementById('modal-new-text').value;
+            const fontSize = parseInt(document.getElementById('modal-font-size').value);
             const fontFamily = document.getElementById('modal-font-family').value;
             const fontWeight = document.getElementById('modal-font-weight').value;
+            const color = document.getElementById('modal-text-color').value;
+            const opacity = parseInt(document.getElementById('modal-opacity').value) / 100;
 
             if (!newText) return;
 
-            // Store replacement
-            state.textReplacements.push({
-                originalBbox: item.bbox,
+            // Add layer
+            state.layers.push({
+                id: Date.now(),
                 originalText: item.text,
                 newText: newText,
+                bbox: item.bbox,
                 fontSize: fontSize,
-                color: color,
                 fontFamily: fontFamily,
-                fontWeight: fontWeight
+                fontWeight: fontWeight,
+                color: color,
+                opacity: opacity,
+                visible: true
             });
 
             saveHistory();
             render();
+            updateLayersList();
             closeReplaceModal();
             showStatus(`Text replaced: "${item.text}" → "${newText}"`, 'success');
         }
 
-        function resetState() {
-            state.textReplacements = [];
-            state.detectedTexts = [];
-            state.selectedTextIndex = -1;
-            state.history = [];
-            state.historyIndex = -1;
-            selectedTextDisplay.innerHTML = '<span style="color:var(--text-muted)">-- None selected --</span>';
-            replacementText.value = '';
-            replacementText.disabled = true;
-            replaceTextBtn.disabled = true;
-            saveHistory();
+        function updateLayersList() {
+            const layersList = document.getElementById('layers-list');
+            layersList.innerHTML = '';
+
+            state.layers.forEach((layer, idx) => {
+                const div = document.createElement('div');
+                div.className = 'layer-item';
+                div.innerHTML = `
+                    <div class="layer-item-content">"${layer.newText}"</div>
+                    <div class="layer-item-actions">
+                        <button onclick="toggleLayerVisibility(${idx})">${layer.visible ? '👁️' : '🚫'}</button>
+                        <button onclick="deleteLayer(${idx})" class="danger">✕</button>
+                    </div>
+                `;
+                layersList.appendChild(div);
+            });
+
+            document.getElementById('clear-layers-btn').disabled = state.layers.length === 0;
         }
 
-        function enableControls() {
-            const controls = document.querySelectorAll('button, input, select');
-            controls.forEach(c => {
-                if (c.id !== 'file-input' && c.id !== 'theme-toggle') c.disabled = false;
-            });
-            detectTextBtn.disabled = false;
-            replaceTextBtn.disabled = true;
-            replacementText.disabled = true;
-            updateUndoRedoButtons();
+        function toggleLayerVisibility(idx) {
+            state.layers[idx].visible = !state.layers[idx].visible;
+            updateLayersList();
+            render();
+        }
+
+        function deleteLayer(idx) {
+            state.layers.splice(idx, 1);
+            saveHistory();
+            updateLayersList();
+            render();
+            showStatus('Layer deleted', 'info');
+        }
+
+        function clearLayers() {
+            if (confirm('Clear all text replacements?')) {
+                state.layers = [];
+                saveHistory();
+                updateLayersList();
+                render();
+                showStatus('All layers cleared', 'info');
+            }
         }
 
         function render() {
             if (!state.originalImage) return;
 
-            editorCanvas.width = state.originalImage.width;
-            editorCanvas.height = state.originalImage.height;
+            // Draw original image
+            state.ctx.drawImage(state.originalImage, 0, 0);
 
-            // Start with base image
-            ctx.drawImage(state.originalImage, 0, 0);
+            // Apply each layer
+            state.layers.forEach(layer => {
+                if (!layer.visible) return;
 
-            // Apply text replacements
-            state.textReplacements.forEach(replacement => {
-                const bbox = replacement.originalBbox;
+                const bbox = layer.bbox;
                 const width = bbox.x1 - bbox.x0;
                 const height = bbox.y1 - bbox.y0;
 
-                // Patch the background (erase original text)
-                const patchData = state.baseCanvas.getContext('2d').getImageData(
+                // Patch background by copying from original
+                const patchData = state.originalCanvas.getContext('2d').getImageData(
                     Math.max(0, bbox.x0 - 2),
                     Math.max(0, bbox.y0 - 2),
-                    Math.min(state.baseCanvas.width, width + 4),
-                    Math.min(state.baseCanvas.height, height + 4)
+                    Math.min(state.originalCanvas.width, width + 4),
+                    Math.min(state.originalCanvas.height, height + 4)
                 );
 
-                ctx.putImageData(
+                state.ctx.putImageData(
                     patchData,
                     Math.max(0, bbox.x0 - 2),
                     Math.max(0, bbox.y0 - 2)
                 );
 
                 // Draw new text
-                ctx.fillStyle = replacement.color;
-                ctx.font = `${replacement.fontWeight} ${replacement.fontSize}px ${replacement.fontFamily}`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(
-                    replacement.newText,
+                state.ctx.globalAlpha = layer.opacity;
+                state.ctx.fillStyle = layer.color;
+                state.ctx.font = `${layer.fontWeight} ${layer.fontSize}px ${layer.fontFamily}`;
+                state.ctx.textAlign = 'center';
+                state.ctx.textBaseline = 'middle';
+                state.ctx.fillText(
+                    layer.newText,
                     bbox.x0 + width / 2,
                     bbox.y0 + height / 2
                 );
+                state.ctx.globalAlpha = 1;
             });
+        }
+
+        function resetState() {
+            state.layers = [];
+            state.detectedTexts = [];
+            state.selectedTextIndex = -1;
+            state.history = [];
+            state.historyIndex = -1;
+            selectedTextDisplay.innerHTML = '<span style="color: var(--text-muted)">-- None selected --</span>';
+            newTextInput.value = '';
+            newTextInput.disabled = true;
+            replaceBtn.disabled = true;
+            document.getElementById('font-size').disabled = true;
+            document.getElementById('font-family').disabled = true;
+            document.getElementById('font-weight').disabled = true;
+            document.getElementById('text-color').disabled = true;
+            document.getElementById('opacity').disabled = true;
+            detectedList.innerHTML = '';
+            detectedList.style.display = 'none';
+            updateLayersList();
+            saveHistory();
+        }
+
+        function enableControls() {
+            detectBtn.disabled = false;
+            resetBtn.disabled = false;
+            downloadBtn.disabled = false;
+            document.getElementById('zoom-fit-btn').disabled = false;
+            document.getElementById('color-picker-btn').disabled = false;
         }
 
         function saveHistory() {
             const snapshot = JSON.stringify({
-                textReplacements: JSON.parse(JSON.stringify(state.textReplacements))
+                layers: JSON.parse(JSON.stringify(state.layers))
             });
-            
+
             if (state.historyIndex < state.history.length - 1) {
                 state.history = state.history.slice(0, state.historyIndex + 1);
             }
-            
+
             state.history.push(snapshot);
             state.historyIndex++;
-            
-            if (state.history.length > 20) {
+
+            if (state.history.length > 30) {
                 state.history.shift();
                 state.historyIndex--;
             }
-            
+
             updateUndoRedoButtons();
         }
 
@@ -884,18 +1029,19 @@
 
         function applyHistoryState() {
             const data = JSON.parse(state.history[state.historyIndex]);
-            state.textReplacements = data.textReplacements;
+            state.layers = data.layers;
+            updateLayersList();
             render();
             updateUndoRedoButtons();
         }
 
         function updateUndoRedoButtons() {
-            document.getElementById('undo-btn').disabled = state.historyIndex <= 0;
-            document.getElementById('redo-btn').disabled = state.historyIndex >= state.history.length - 1;
+            undoBtn.disabled = state.historyIndex <= 0;
+            redoBtn.disabled = state.historyIndex >= state.history.length - 1;
         }
 
         function reset() {
-            if (confirm('Are you sure you want to reset all changes?')) {
+            if (confirm('Reset all changes?')) {
                 resetState();
                 render();
                 showStatus('All changes reset', 'info');
@@ -904,23 +1050,32 @@
 
         function download() {
             const link = document.createElement('a');
-            link.download = 'exact-replica-image.png';
-            link.href = editorCanvas.toDataURL('image/png');
+            link.download = 'manus-image-pro-edited.png';
+            link.href = state.mainCanvas.toDataURL('image/png');
             link.click();
             showStatus('Image downloaded', 'success');
         }
 
-        function showStatus(message, type = 'info') {
-            statusMessage.textContent = message;
-            statusMessage.className = `status-message show ${type}`;
-            setTimeout(() => {
-                statusMessage.classList.remove('show');
-            }, 4000);
+        function zoomFit() {
+            const wrapper = state.mainCanvas.parentElement;
+            wrapper.style.maxWidth = '100%';
+            wrapper.style.maxHeight = '100%';
+            showStatus('Zoomed to fit', 'info');
         }
 
-        function applyTheme() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            document.body.setAttribute('data-theme', savedTheme);
+        function showStatus(message, type = 'info') {
+            const statusLeft = document.getElementById('status-left');
+            statusLeft.textContent = message;
+            statusLeft.style.color = type === 'success' ? '#10b981' : type === 'error' ? '#dc3545' : '#666';
+            setTimeout(() => {
+                statusLeft.textContent = 'Ready';
+                statusLeft.style.color = '#666';
+            }, 3000);
+        }
+
+        function togglePanel(header) {
+            const content = header.nextElementSibling;
+            content.classList.toggle('active');
         }
 
         init();
